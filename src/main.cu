@@ -27,13 +27,42 @@ struct perlin_map *perlin_map_new(unsigned int c_x, unsigned int c_y, unsigned i
 	return p;
 }
 
+__global__
+void perlin_fill_heights(double *height_map, unsigned int c_x, unsigned int c_y, unsigned int g)
+{
+	int num_elems = (c_x * g) * (c_y * g); 
+	int index = blockIdx.x * blockDim.x + threadIdx.x;
+	int stride = blockDim.x * gridDim.x;
+	// grid-stride loop
+	for (int i = index; i < num_elems; i += stride) {
+		int x_pos, y_pos;
+		// un-linearise
+		x_pos = i % (c_x * g);
+		y_pos = (i - x_pos) / (c_x * g);
+		// snap to grid
+		 
+		
+
+
+	
+	}
+
+
+
+}
+
 
 
 
 int main(void)
 {
+	// allocate host memory
 	struct perlin_map *p = perlin_map_new(CELL_X, CELL_Y, GRAIN);
 
+			
+	// allocate device memory
+	double *d_heights;
+	cudaMalloc((void **)&d_heights, sizeof(double) * (CELL_X * GRAIN) * (CELL_Y * GRAIN));
 	
 
 
