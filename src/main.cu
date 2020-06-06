@@ -27,6 +27,33 @@ struct perlin_map *perlin_map_new(unsigned int c_x, unsigned int c_y, unsigned i
 	return p;
 }
 
+char *render_grayscale(const struct perlin_map *p)
+{
+	assert(p != NULL);
+	char *im = (char *)malloc(sizeof(char) * (p->cells_x * p->grain) * (p->cells_y * p->grain) * 4);
+	assert(im != NULL);
+	double min, max;
+	min = (p->heights)[0];
+	max = (p->heights)[0];
+	int num_elems = (p->cells_x * p->grain) * (p->cells_y * p->grain);
+	for (int i = 0; i < num_elems; i++) {
+		if ((p->heights)[i] < min) {
+			min = (p->heights)[i];
+		}
+		if ((p->heights)[i] > max) {
+			max = (p->heights)[i];
+		}
+	}
+
+	for (int i = 0; i < num_elems; i++) {
+		
+
+	}
+
+
+}
+
+
 __global__
 void perlin_fill_heights(double *height_map, unsigned int c_x, unsigned int c_y, unsigned int g)
 {
