@@ -70,6 +70,33 @@ unsigned char *render_grayscale(const struct perlin_map *p)
 	return im;
 }
 
+__device__
+double fade(int d)
+{
+	return (double)(6 * (d * d * d * d * d) - 15 * (d * d * d * d) + 10 * (d * d * d));
+}
+
+__device__
+double linterp(double t, double a, double b)
+{
+	return a + t * (b - a);
+
+}
+
+__device__
+double grad(int hash, int x_d, int y_d)
+{
+	switch (hash & 0x7) {
+		case 0x0: return (double)(x_d + y_d);
+		case 0x1: return (double)(-x_d + y_d);
+		case 0x2: return (double)(x_d - y_d);
+		case 0x3: return (double)(-x_d - y_d);
+		case 0x4: return (double)(x_d);
+		case 0x5: return (double)(-x_d);
+		case 0x6: return (double)(y_d);
+		case 0x7: return (double)(-y_d);
+	}
+}
 
 __global__
 void perlin_fill_heights(double *height_map, unsigned int c_x, unsigned int c_y, unsigned int g)
@@ -77,19 +104,25 @@ void perlin_fill_heights(double *height_map, unsigned int c_x, unsigned int c_y,
 	int num_elems = (c_x * g) * (c_y * g); 
 	int index = blockIdx.x * blockDim.x + threadIdx.x;
 	int stride = blockDim.x * gridDim.x;
+
+
 	// grid-stride loop
 	for (int i = index; i < num_elems; i += stride) {
 		int x_pos, y_pos;
+		int x_disp, y_disp;
+		double x_fade, y_fade;
 		// un-linearise
 		x_pos = i % (c_x * g);
 		y_pos = (i - x_pos) / (c_x * g);
-		// snap to grid
-		 	
+		// displacements
+		x_disp = x_pos % g;
+		y_disp = y_pos % g;
+		// fade
+		x_fade = fade(x_disp);
+		y_fade = fade(y_disp);
+		
 	}
 }
-
-
-
 
 int main(void)
 {
@@ -101,17 +134,17 @@ int main(void)
 			(p->heights)[i + j * (p->cells_x * p->grain)] = i + j;
 		}
 	} 	
-
+	/*
 	unsigned char *render = render_grayscale(p);
 	unsigned char *png = 0;
 	size_t pngsize;	
 	unsigned int err = lodepng_encode32(&png, &pngsize, render, p->cells_x * p->grain, p->cells_y * p->grain);	
 	lodepng_save_file(png, pngsize, "test.png");
-		
+	
+*/	
 	// allocate device memory
 	//double *d_heights;
-	//cudaMalloc((void **)&d_heights, sizeof(double) * (CELL_X * GRAIN) * (CELL_Y * GRAIN));
-	
+	//cudaMalloc((void **)&d_heights, sizeof(double) * (CELL_X * GRAIN) * (CELL_Y * GRAIN)); 	
 	perlin_map_destroy(&p);
 
 
