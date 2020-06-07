@@ -1,2 +1,4 @@
 *.out
 perlin
+lodepng.h
+lodepng.c
