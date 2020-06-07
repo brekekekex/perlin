@@ -6,9 +6,9 @@
 #include <cuda_runtime.h>
 #include "lodepng.h"
 
-#define CELL_X 600
-#define CELL_Y 600
-#define GRAIN 5
+#define CELL_X 60
+#define CELL_Y 60
+#define GRAIN 10
 
 struct perlin_map{
 	double *heights;
@@ -71,8 +71,9 @@ unsigned char *render_grayscale(const struct perlin_map *p)
 }
 
 __device__
-double fade(int d)
+double fade(int du)
 {
+	double d = ((float)du) / 10;
 	return (double)(6 * (d * d * d * d * d) - 15 * (d * d * d * d) + 10 * (d * d * d));
 }
 
@@ -83,8 +84,11 @@ double linterp(double t, double a, double b)
 }
 
 __device__
-double grad(int hash, int x_d, int y_d)
+double grad(int hash, int x_du, int y_du)
 {
+	double x_d = ((double)x_du) / 10;
+	double y_d = ((double)y_du) / 10;
+
 	switch (hash & 0x7) {
 		case 0x0: return (double)(x_d + y_d);
 		case 0x1: return (double)(-x_d + y_d);
@@ -105,6 +109,7 @@ void perlin_fill_heights(double *height_map, unsigned int c_x, unsigned int c_y,
 	int num_elems = (c_x * g) * (c_y * g); 
 	int index = blockIdx.x * blockDim.x + threadIdx.x;
 	int stride = blockDim.x * gridDim.x;
+
 
 	int p[512] = {151,160,137,91,90,15, 131,13,201,95,96,53,194,233,7,225,140,36,103,30,69,142,8,99,37,240,21,10,23, 190, 6,148,247,120,234,75,0,26,197,62,94,252,219,203,117,35,11,32,57,177,33, 88,237,149,56,87,174,20,125,136,171,168, 68,175,74,165,71,134,139,48,27,166, 77,146,158,231,83,111,229,122,60,211,133,230,220,105,92,41,55,46,245,40,244, 102,143,54, 65,25,63,161, 1,216,80,73,209,76,132,187,208, 89,18,169,200,196, 135,130,116,188,159,86,164,100,109,198,173,186, 3,64,52,217,226,250,124,123, 5,202,38,147,118,126,255,82,85,212,207,206,59,227,47,16,58,17,182,189,28,42, 223,183,170,213,119,248,152, 2,44,154,163, 70,221,153,101,155,167, 43,172,9, 129,22,39,253, 19,98,108,110,79,113,224,232,178,185, 112,104,218,246,97,228, 251,34,242,193,238,210,144,12,191,179,162,241, 81,51,145,235,249,14,239,107, 49,192,214, 31,181,199,106,157,184, 84,204,176,115,121,50,45,127, 4,150,254, 138,236,205,93,222,114,67,29,24,72,243,141,128,195,78,66,215,61,156,180,151,160,137,91,90,15, 131,13,201,95,96,53,194,233,7,225,140,36,103,30,69,142,8,99,37,240,21,10,23, 190, 6,148,247,120,234,75,0,26,197,62,94,252,219,203,117,35,11,32,57,177,33, 88,237,149,56,87,174,20,125,136,171,168, 68,175,74,165,71,134,139,48,27,166, 77,146,158,231,83,111,229,122,60,211,133,230,220,105,92,41,55,46,245,40,244, 102,143,54, 65,25,63,161, 1,216,80,73,209,76,132,187,208, 89,18,169,200,196, 135,130,116,188,159,86,164,100,109,198,173,186, 3,64,52,217,226,250,124,123, 5,202,38,147,118,126,255,82,85,212,207,206,59,227,47,16,58,17,182,189,28,42, 223,183,170,213,119,248,152, 2,44,154,163, 70,221,153,101,155,167, 43,172,9, 129,22,39,253, 19,98,108,110,79,113,224,232,178,185, 112,104,218,246,97,228, 251,34,242,193,238,210,144,12,191,179,162,241, 81,51,145,235,249,14,239,107, 49,192,214, 31,181,199,106,157,184, 84,204,176,115,121,50,45,127, 4,150,254, 138,236,205,93,222,114,67,29,24,72,243,141,128,195,78,66,215,61,156,180};
 	
@@ -136,8 +141,8 @@ void perlin_fill_heights(double *height_map, unsigned int c_x, unsigned int c_y,
 		BB = p[B + 1];
 		// assign height
 		height_map[i] = linterp(y_fade,
-		linterp(x_fade, grad(p[AA], x_disp, y_disp), grad(p[BA], x_disp - 1, y_disp)),
-		linterp(x_fade, grad(p[AB], x_disp, y_disp - 1), grad(p[BB], x_disp - 1, y_disp - 1)));
+		linterp(x_fade, grad(p[AA], x_disp, y_disp), grad(p[BA], x_disp - g, y_disp)),
+		linterp(x_fade, grad(p[AB], x_disp, y_disp - g), grad(p[BB], x_disp - g, y_disp - g)));
 	}
 }
 
@@ -155,6 +160,15 @@ int main(void)
 	
  	// transfer map to host
 	cudaMemcpy(p->heights, d_heights, sizeof(double) * (p->cells_x * p->grain) * (p->cells_y * p->grain), cudaMemcpyDeviceToHost);
+
+
+	// print
+	for (int i = 0; i < p->cells_x * p->grain; i++) {
+		for (int j = 0; j < p->cells_y * p->grain; j++) {
+			printf("%f\n", (p->heights)[i + j * (p->cells_x * p->grain)]);
+		}
+	}
+
 
 	// render
 	unsigned char *render = render_grayscale(p);
@@ -179,5 +193,4 @@ int main(void)
 */	
 	return 0;
 }
-
 
