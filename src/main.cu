@@ -46,14 +46,15 @@ unsigned char *render_grayscale(const struct perlin_map *p)
 				max = (p->heights)[i + j * (p->cells_x * p->grain)];
 			}
 		}
-	} 
+	}
+	printf("Min: %f, Max: %f", min, max); 
 	// write rgba
 	for (int i = 0; i < (p->cells_x * p->grain); i++) {
 		for (int j = 0; j < (p->cells_y * p->grain); j++) {
 			im[4 * i + (4 * j * (p->cells_x * p->grain)) + 0] = 0;
 			im[4 * i + (4 * j * (p->cells_x * p->grain)) + 1] = 0;
 			im[4 * i + (4 * j * (p->cells_x * p->grain)) + 2] = 0;
-			im[4 * i + (4 * j * (p->cells_x * p->grain)) + 2] = (char)(255. * (((p->heights)[i + j * (p->cells_x * p->grain)] - min) / (max - min)));
+			im[4 * i + (4 * j * (p->cells_x * p->grain)) + 3] = (char)(255. * (((p->heights)[i + j * (p->cells_x * p->grain)] - min) / (max - min)));
 		}
 	}
 	return im;

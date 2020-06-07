@@ -1,4 +1,5 @@
 *.out
+*.png
 perlin
 lodepng.h
 lodepng.cu
