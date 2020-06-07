@@ -8,7 +8,7 @@
 
 #define CELL_X 600
 #define CELL_Y 600
-#define GRAIN 10
+#define GRAIN 5
 
 struct perlin_map{
 	double *heights;
@@ -61,10 +61,10 @@ unsigned char *render_grayscale(const struct perlin_map *p)
 	// write rgba (use alpha to encode normalized heights)
 	for (int i = 0; i < (p->cells_x * p->grain); i++) {
 		for (int j = 0; j < (p->cells_y * p->grain); j++) {
-			im[4 * i + (4 * j * (p->cells_x * p->grain)) + 0] = 0;
-			im[4 * i + (4 * j * (p->cells_x * p->grain)) + 1] = 0;
-			im[4 * i + (4 * j * (p->cells_x * p->grain)) + 2] = 0;
-			im[4 * i + (4 * j * (p->cells_x * p->grain)) + 3] = (char)(255. * (((p->heights)[i + j * (p->cells_x * p->grain)] - min) / (max - min)));
+			im[4 * i + (4 * j * (p->cells_x * p->grain)) + 0] = (char)(0.3 * 255. * (((p->heights)[i + j * (p->cells_x * p->grain)] - min) / (max - min)));
+			im[4 * i + (4 * j * (p->cells_x * p->grain)) + 1] = (char)(0.59 * 255. * (((p->heights)[i + j * (p->cells_x * p->grain)] - min) / (max - min)));
+			im[4 * i + (4 * j * (p->cells_x * p->grain)) + 2] = (char)(0.11 * 255. * (((p->heights)[i + j * (p->cells_x * p->grain)] - min) / (max - min)));
+			im[4 * i + (4 * j * (p->cells_x * p->grain)) + 3] = 255;
 		}
 	}
 	return im;
@@ -94,6 +94,8 @@ double grad(int hash, int x_d, int y_d)
 		case 0x5: return (double)(-x_d);
 		case 0x6: return (double)(y_d);
 		case 0x7: return (double)(-y_d);
+		default:
+			assert(0);
 	}
 }
 
@@ -110,7 +112,7 @@ void perlin_fill_heights(double *height_map, unsigned int c_x, unsigned int c_y,
 	for (int i = index; i < num_elems; i += stride) {
 		int x_pos, y_pos;
 		int x_disp, y_disp;
-		int x_ref, x_ref;
+		int x_ref, y_ref;
 		int A, AA, AB, B, BA, BB;
 		double x_fade, y_fade;
 		// un-linearise
@@ -135,7 +137,7 @@ void perlin_fill_heights(double *height_map, unsigned int c_x, unsigned int c_y,
 		// assign height
 		height_map[i] = linterp(y_fade,
 		linterp(x_fade, grad(p[AA], x_disp, y_disp), grad(p[BA], x_disp - 1, y_disp)),
-		linterp(x_fade, grad(p[AB], x_disp, y_disp - 1), grad(p[BB], x_disp - 1, y_disp - 1)))
+		linterp(x_fade, grad(p[AB], x_disp, y_disp - 1), grad(p[BB], x_disp - 1, y_disp - 1)));
 	}
 }
 
@@ -144,11 +146,29 @@ int main(void)
 	// allocate host memory
 	struct perlin_map *p = perlin_map_new(CELL_X, CELL_Y, GRAIN);
 
-	for (int i = 0; i < (p->cells_x * p->grain); i++) {
-		for (int j = 0; j < (p->cells_y * p->grain); j++) {	
-			(p->heights)[i + j * (p->cells_x * p->grain)] = i + j;
-		}
-	} 	
+	// allocate device memory
+	double *d_heights;
+	cudaMalloc((void **)&d_heights, sizeof(double) * (p->cells_x * p->grain) * (p->cells_y * p->grain));
+	
+	// run kernel
+	perlin_fill_heights<<<32, 256>>>(d_heights, p->cells_x, p->cells_y, p->grain);	
+	
+ 	// transfer map to host
+	cudaMemcpy(p->heights, d_heights, sizeof(double) * (p->cells_x * p->grain) * (p->cells_y * p->grain), cudaMemcpyDeviceToHost);
+
+	// render
+	unsigned char *render = render_grayscale(p);
+	unsigned char *png = 0;
+	size_t pngsize;
+	unsigned int err = lodepng_encode32(&png, &pngsize, render, p->cells_x * p->grain, p->cells_y * p->grain);
+	lodepng_save_file(png, pngsize, "test.png");
+
+	// deallocate device memory
+	cudaFree(d_heights);
+	
+	// deallocate host memory
+	perlin_map_destroy(&p);
+	
 	/*
 	unsigned char *render = render_grayscale(p);
 	unsigned char *png = 0;
@@ -157,13 +177,6 @@ int main(void)
 	lodepng_save_file(png, pngsize, "test.png");
 	
 */	
-	// allocate device memory
-	//double *d_heights;
-	//cudaMalloc((void **)&d_heights, sizeof(double) * (CELL_X * GRAIN) * (CELL_Y * GRAIN)); 	
-	perlin_map_destroy(&p);
-
-
-
 	return 0;
 }
 
