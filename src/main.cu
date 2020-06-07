@@ -4,6 +4,7 @@
 #include <math.h>
 #include <cuda.h>
 #include <cuda_runtime.h>
+#include "lodepng.h"
 
 #define CELL_X 600
 #define CELL_Y 600
@@ -32,6 +33,7 @@ char *render_grayscale(const struct perlin_map *p)
 	assert(p != NULL);
 	char *im = (char *)malloc(sizeof(char) * (p->cells_x * p->grain) * (p->cells_y * p->grain) * 4);
 	assert(im != NULL);
+	// find min and max heights
 	double min, max;
 	min = (p->heights)[0];
 	max = (p->heights)[0];
@@ -44,9 +46,9 @@ char *render_grayscale(const struct perlin_map *p)
 			max = (p->heights)[i];
 		}
 	}
-
+	// normalize and create image
 	for (int i = 0; i < num_elems; i++) {
-		
+		im[i + 
 
 	}
 
