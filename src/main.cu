@@ -28,6 +28,17 @@ struct perlin_map *perlin_map_new(unsigned int c_x, unsigned int c_y, unsigned i
 	return p;
 }
 
+void perlin_map_destroy(struct perlin_map **p) 
+{
+	assert(*p != NULL);
+	free((*p)->heights);
+	(*p)->cells_x = 0;
+	(*p)->cells_y = 0;
+	(*p)->grain = 0;
+	free(*p);
+	(*p) = NULL;
+}
+
 unsigned char *render_grayscale(const struct perlin_map *p)
 {
 	assert(p != NULL);
@@ -46,9 +57,8 @@ unsigned char *render_grayscale(const struct perlin_map *p)
 				max = (p->heights)[i + j * (p->cells_x * p->grain)];
 			}
 		}
-	}
-	printf("Min: %f, Max: %f", min, max); 
-	// write rgba
+	} 
+	// write rgba (use alpha to encode normalized heights)
 	for (int i = 0; i < (p->cells_x * p->grain); i++) {
 		for (int j = 0; j < (p->cells_y * p->grain); j++) {
 			im[4 * i + (4 * j * (p->cells_x * p->grain)) + 0] = 0;
@@ -102,7 +112,7 @@ int main(void)
 	//double *d_heights;
 	//cudaMalloc((void **)&d_heights, sizeof(double) * (CELL_X * GRAIN) * (CELL_Y * GRAIN));
 	
-
+	perlin_map_destroy(&p);
 
 
 
