@@ -58,9 +58,10 @@ unsigned char *perlin_noise_render(const struct perlin_noise *p)
 	// write rgba 
 	for (int i = 0; i < p->width; i++) {
 		for (int j = 0; j < p->height; j++) {
-			im[4 * i + (4 * j * (p->width)) + 0] = (char)(255. * (((p->noise_map)[i + j * (p->width)] - min) / (max - min)));
-			im[4 * i + (4 * j * (p->width)) + 1] = 0;
-			im[4 * i + (4 * j * (p->width)) + 2] = 0;
+			char val = (char)(255. * (((p->noise_map)[i + j * (p->width)] - min) / (max - min)));
+			im[4 * i + (4 * j * (p->width)) + 0] = val;
+			im[4 * i + (4 * j * (p->width)) + 1] = val;
+			im[4 * i + (4 * j * (p->width)) + 2] = val;
 			im[4 * i + (4 * j * (p->width)) + 3] = 255;
 		}
 	}
@@ -133,14 +134,14 @@ void perlin_noise_fill(double *noise_map, unsigned int w, unsigned int h, unsign
 int main(void)
 {
 	// allocate host memory
-	struct perlin_noise *p = perlin_noise_new(100, 100, 13);
+	struct perlin_noise *p = perlin_noise_new(1920, 1080, 64);
 
 	// allocate device memory
 	double *d_noise;
 	cudaMalloc((void **)&d_noise, sizeof(double) * p->width * p->height);
 	
 	// run kernel
-	perlin_noise_fill<<<32, 256>>>(d_noise, p->width, p->height, p->samples);	
+	perlin_noise_fill<<<64, 1024>>>(d_noise, p->width, p->height, p->samples);	
 	
  	// transfer map to host
 	cudaMemcpy(p->noise_map, d_noise, sizeof(double) * p->width * p->height, cudaMemcpyDeviceToHost);
