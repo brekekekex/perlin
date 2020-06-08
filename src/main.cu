@@ -5,6 +5,9 @@
 #include <cuda_runtime.h>
 #include "lodepng.h"
 
+#define WIDTH_4K 3840
+#define HEIGHT_4K 2160
+
 struct perlin_noise {
     	double *noise_map;
 	unsigned int width;
@@ -143,14 +146,14 @@ void perlin_noise_fill(double *noise_map, unsigned int w, unsigned int h, unsign
 int main(void)
 {
 	// allocate host memory
-	struct perlin_noise *p = perlin_noise_new(1920, 1080, 64);
+	struct perlin_noise *p = perlin_noise_new(WIDTH_4K, HEIGHT_4K, 100);
 
 	// allocate device memory
 	double *d_noise;
 	cudaMalloc((void **)&d_noise, sizeof(double) * p->width * p->height);
 	
 	// run kernel
-	perlin_noise_fill<<<64, 1024>>>(d_noise, p->width, p->height, p->samples, 6, 0.8);	
+	perlin_noise_fill<<<1024, 1024>>>(d_noise, p->width, p->height, p->samples, 5, 0.8);	
 	
  	// transfer map to host
 	cudaMemcpy(p->noise_map, d_noise, sizeof(double) * p->width * p->height, cudaMemcpyDeviceToHost);
