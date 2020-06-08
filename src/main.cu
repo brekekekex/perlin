@@ -6,34 +6,34 @@
 #include "lodepng.h"
 
 struct perlin_noise {
-    double *noise_map;
+    	double *noise_map;
 	unsigned int width;
 	unsigned int height;
-    unsigned int samples; // per integral value
+	unsigned int samples; // per integral value
 };
 
 struct perlin_noise *perlin_noise_new(unsigned int w, unsigned int h, unsigned int s)
 {
 	struct perlin_noise *p = (struct perlin_noise *)malloc(sizeof(struct perlin_noise));
-    assert(p != NULL);
-    p->width = w;
-    p->height = h;
-    p->samples = s;
-    p->noise_map = (double *)malloc(sizeof(double) * p->width * p->height);
-    assert(p->noise_map != NULL);
-    return p;
+   	assert(p != NULL);
+   	p->width = w;
+   	p->height = h;
+   	p->samples = s;
+   	p->noise_map = (double *)malloc(sizeof(double) * p->width * p->height);
+	assert(p->noise_map != NULL);
+    	return p;
 }
 
 void perlin_noise_destroy(struct perlin_noise **p)
 {
-    assert(*p != NULL);
-    free((*p)->noise_map);
-    (*p)->noise_map = NULL;
-    (*p)->width = 0;
-    (*p)->height = 0;
-    (*p)->samples = 0;
-    free(*p);
-    (*p) = NULL;
+    	assert(*p != NULL);
+    	free((*p)->noise_map);
+   	(*p)->noise_map = NULL;
+   	(*p)->width = 0;
+    	(*p)->height = 0;
+    	(*p)->samples = 0;
+    	free(*p);
+    	(*p) = NULL;
 }
 
 unsigned char *perlin_noise_render(const struct perlin_noise *p)
