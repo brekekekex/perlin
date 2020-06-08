@@ -153,7 +153,7 @@ int main(void)
 	cudaMalloc((void **)&d_noise, sizeof(double) * p->width * p->height);
 	
 	// run kernel
-	perlin_noise_fill<<<1024, 1024>>>(d_noise, p->width, p->height, p->samples, 5, 0.8);	
+	perlin_noise_fill<<<1024, 1024>>>(d_noise, p->width, p->height, p->samples, 7, 0.8);	
 	
  	// transfer map to host
 	cudaMemcpy(p->noise_map, d_noise, sizeof(double) * p->width * p->height, cudaMemcpyDeviceToHost);
