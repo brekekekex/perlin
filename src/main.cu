@@ -5,8 +5,19 @@
 #include <cuda_runtime.h>
 #include "lodepng.h"
 
-#define WIDTH_4K 3840
-#define HEIGHT_4K 2160
+// render configuration
+#define WIDTH_PIX 3840
+#define HEIGHT_PIX 2160
+#define SAMPLE_RATE 100
+#define OCTAVES 7
+#define PERSISTENCE 0.8
+
+// execution configuration
+#define THREAD_BLOCKS 32
+#define THREADS 1024
+
+// output configuration
+#define OUTFILE_NAME "render.png"
 
 struct perlin_noise {
     	double *noise_map;
@@ -146,14 +157,14 @@ void perlin_noise_fill(double *noise_map, unsigned int w, unsigned int h, unsign
 int main(void)
 {
 	// allocate host memory
-	struct perlin_noise *p = perlin_noise_new(WIDTH_4K, HEIGHT_4K, 100);
+	struct perlin_noise *p = perlin_noise_new(WIDTH_PIX, HEIGHT_PIX, SAMPLE_RATE);
 
 	// allocate device memory
 	double *d_noise;
 	cudaMalloc((void **)&d_noise, sizeof(double) * p->width * p->height);
 	
 	// run kernel
-	perlin_noise_fill<<<1024, 1024>>>(d_noise, p->width, p->height, p->samples, 7, 0.8);	
+	perlin_noise_fill<<<THREAD_BLOCKS, THREADS>>>(d_noise, p->width, p->height, p->samples, OCTAVES, PERSISTENCE);	
 	
  	// transfer map to host
 	cudaMemcpy(p->noise_map, d_noise, sizeof(double) * p->width * p->height, cudaMemcpyDeviceToHost);
@@ -163,7 +174,7 @@ int main(void)
 	unsigned char *png = 0;
 	size_t pngsize;
 	unsigned int err = lodepng_encode32(&png, &pngsize, render, p->width, p->height);
-	lodepng_save_file(png, pngsize, "test.png");
+	lodepng_save_file(png, pngsize, OUTFILE_NAME);
 
 	// deallocate device memory
 	cudaFree(d_noise);
