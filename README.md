@@ -1,5 +1,9 @@
 # perlin
 
+<p align="center">
+  <img src="https://github.com/brekekekex/perlin/blob/master/src/render.png" width="400" />
+</p>
+
 ## Overview
 Ken Perlin's eponymous [noise function](https://en.wikipedia.org/wiki/Perlin_noise)&mdash;whose original C implementation may be found [here](https://mrl.nyu.edu/~perlin/doc/oscar.html#noise)&mdash;is a means of procedurally generating textures *apropos* CGI (realtime or otherwise). The essence of his algorithm can be distilled as follows: a pseudorandom gradient field is defined over an *n*-dimensional lattice, from which a surface may be interpolated in *R^n*. Sampling this surface yields a type of [gradient noise](https://en.wikipedia.org/wiki/Gradient_noise). 
 
@@ -28,11 +32,11 @@ sbatch make.sh
 Otherwise, directly compile the source with NVCC:
 ```
 nvcc -o perlin main.cu lodepng.cu
+./perlin
 ```
 
-
-
-
+The image above was generated at 4K resolution over 7 octaves of noise (starting at 100 Hz) with a persistence of 0.8.
+This configuration may be modified through the macros in *main.cu*.
 
 
 
