@@ -17,7 +17,7 @@ My work on the University of Rochester's [BlueHive cluster](https://www.circ.roc
 The CUDA kernel is followed by a *cudaMemcpy()* to the CPU, where the data are encoded to a PNG using Lode Vandevenne's [LodePNG](https://lodev.org/lodepng/) as in my [previous project](https://github.com/brekekekex/seam).
 
 ## Usage 
-*perlin* is more a vular research script than a standalone program. With that said, one may build and run it as follows:
+*perlin* is more a vulgar research script than a standalone program. With that said, one may build and run it as follows:
 
 Clone the repository:
 ```
